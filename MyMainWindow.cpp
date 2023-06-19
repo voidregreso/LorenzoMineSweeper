@@ -4,8 +4,10 @@
 #include <QMessageBox>
 #include <QRandomGenerator>
 #include <set>
+#include <QTimer>
+#include <QHBoxLayout>
 
-MyMainWindow::MyMainWindow() {
+MyMainWindow::MyMainWindow() : timer(nullptr) {
     QMenuBar* menuBar = new QMenuBar;
 
     QMenu* gameMenu = new QMenu("Game", this);
@@ -33,14 +35,32 @@ MyMainWindow::MyMainWindow() {
     this->setMenuBar(menuBar);
 
     minefieldWidget = new QWidget;
-    layout = new QGridLayout(minefieldWidget);
+    QVBoxLayout* mainLayout = new QVBoxLayout(minefieldWidget);
+
+    QHBoxLayout* timerLayout = new QHBoxLayout;
+    timerLabel = new QLabel("00:00:00");
+    timerLayout->addStretch();
+    timerLayout->addWidget(timerLabel);
+    timerLayout->addStretch();
+    mainLayout->addLayout(timerLayout);
+
+    layout = new QGridLayout;
+    mainLayout->addLayout(layout);
 
     setCentralWidget(minefieldWidget);
 
-    setFixedSize(650, 650);
+    setFixedSize(650, 680);
 }
 
 void MyMainWindow::newGame() {
+    // Reset timer
+    if (timer != nullptr) {
+        delete timer;
+        timer = nullptr;
+    }
+    timeElapsed = QTime(0, 0, 0);
+    updateTimerLabel();
+
     revealedTiles = 0;
 
     // Resize each time when current size does not match last size
@@ -83,7 +103,7 @@ void MyMainWindow::newGame() {
             minefield[i][j] = new MinefieldButton(i, j);
             minefield[i][j]->setStyleSheet("background-color: gray");
             minefield[i][j]->setFixedSize(600 / fieldSize, 600 / fieldSize);
-            layout->addWidget(minefield[i][j], i, j);
+            layout->addWidget(minefield[i][j], i + 1, j);
             if (!minefield[i][j]->isEnabled()) {
                 minefield[i][j]->setEnabled(true);
             }
@@ -102,12 +122,16 @@ void MyMainWindow::newGame() {
     for (const auto& mine : mines) {
         minefieldData[mine.first][mine.second] = 1;
     }
+
+    // Start the timer
+    startTimer();
 }
 
 void MyMainWindow::handleButtonClick(int row, int col) {
     if (minefieldData[row][col] == 1) { // Fallo
         minefield[row][col]->setStyleSheet("background-color: red");
         QMessageBox::information(this, "Game Over", "You've hit a mine!");
+        stopTimer();
         newGame();
     }
     else {
@@ -116,6 +140,7 @@ void MyMainWindow::handleButtonClick(int row, int col) {
         int remainingTiles = 0;
         if (revealedTiles == fieldSize * fieldSize - mineCount) {
             QMessageBox::information(this, "Congratulations", "You've won the game!");
+            stopTimer();
             newGame();
         }
     }
@@ -180,4 +205,28 @@ void MyMainWindow::setDifficulty(Difficulty difficulty) {
         }
     }
     newGame();
+}
+
+void MyMainWindow::startTimer() {
+    timer = new QTimer(this);
+    connect(timer, &QTimer::timeout, this, &MyMainWindow::updateTimeElapsed);
+    timer->start(1000);  // Update every second
+}
+
+void MyMainWindow::stopTimer() {
+    if (timer != nullptr) {
+        timer->stop();
+        delete timer;
+        timer = nullptr;
+    }
+}
+
+void MyMainWindow::updateTimeElapsed() {
+    timeElapsed = timeElapsed.addSecs(1);
+    updateTimerLabel();
+}
+
+void MyMainWindow::updateTimerLabel() {
+    QString timeText = timeElapsed.toString("hh:mm:ss");
+    timerLabel->setText(timeText);
 }

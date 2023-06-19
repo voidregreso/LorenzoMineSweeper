@@ -12,7 +12,7 @@ This is a cross-platform Minesweeper game based of the C++ version and developed
 
 ## Planned Features
 
-- Implementation of game timing and scoring functionality.
+- Implementation of scoring functionality.
 
 ## Installation and Running
 

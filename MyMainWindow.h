@@ -2,7 +2,10 @@
 
 #include "MinefieldButton.h"
 #include <QMainWindow>
+#include <QLabel>
 #include <QGridLayout>
+#include <QTime>
+#include <QTimer>
 
 class MyMainWindow : public QMainWindow {
     Q_OBJECT
@@ -14,11 +17,19 @@ private:
 
     QWidget* minefieldWidget;
     QGridLayout* layout;
+    QLabel* timerLabel;
+    QTime timeElapsed;
+    QTimer* timer;
 
     int lastFieldSize = 0;
     int fieldSize = 0;
     int mineCount = 0;
     int revealedTiles = 0;
+
+    void startTimer();
+    void stopTimer();
+    void updateTimeElapsed();
+    void updateTimerLabel();
 
 public:
     MyMainWindow();
